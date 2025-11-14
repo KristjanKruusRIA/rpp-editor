@@ -31,10 +31,10 @@ class TrackInfo:
 class RPPParser:
     """Parser for REAPER project files using the rpp library."""
 
-    def __init__(self, file_path: str = None):
-        self.file_path = file_path
-        self.project = None
-        self.tracks = []
+    def __init__(self, file_path: Optional[str] = None):
+        self.file_path: Optional[str] = file_path
+        self.project: Optional[Any] = None
+        self.tracks: List[TrackInfo] = []
 
         if file_path:
             self.load_file(file_path)
@@ -77,6 +77,9 @@ class RPPParser:
 
     def _parse_master_track(self) -> Optional[TrackInfo]:
         """Parse the master track."""
+        if not self.project:
+            return None
+
         try:
             # Master track doesn't have a TRACK element, we get data directly from project root
 
@@ -122,6 +125,9 @@ class RPPParser:
     def _parse_master_effects(self) -> List[Dict[str, Any]]:
         """Parse effects from the MASTERFXLIST."""
         effects = []
+
+        if not self.project:
+            return effects
 
         masterfxlist_element = self.project.find(".//MASTERFXLIST")
         if not masterfxlist_element:
@@ -412,12 +418,14 @@ class RPPParser:
                 # Update track info
                 target_track.effects = source_track.effects.copy()
 
-    def save_file(self, output_path: str = None):
+    def save_file(self, output_path: Optional[str] = None):
         """Save the modified project to a file."""
         if not self.project:
             raise Exception("No project loaded")
 
         if not output_path:
+            if not self.file_path:
+                raise Exception("No output path specified and no file path set")
             output_path = self.file_path
 
         try:

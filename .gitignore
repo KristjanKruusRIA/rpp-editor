@@ -1,0 +1,6 @@
+#Reaper backup files
+*.rpp-bak
+
+#Python cache files
+__pycache__/
+*.pyc

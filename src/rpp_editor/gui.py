@@ -184,23 +184,23 @@ class RPPEditorGUI:
 
         # Pack frames with grid layout for better scrollbar support
         tracks1_frame.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=True)
-        
+
         # Grid layout for tracks1 frame
         self.tracks1_tree.grid(row=0, column=0, sticky="nsew")
         tracks1_scrollbar.grid(row=0, column=1, sticky="ns")
         tracks1_h_scrollbar.grid(row=1, column=0, sticky="ew")
-        
+
         # Configure grid weights for tracks1 frame
         tracks1_frame.grid_rowconfigure(0, weight=1)
         tracks1_frame.grid_columnconfigure(0, weight=1)
 
         tracks2_frame.pack(side=tk.RIGHT, padx=5, pady=5, fill=tk.BOTH, expand=True)
-        
+
         # Grid layout for tracks2 frame
         self.tracks2_tree.grid(row=0, column=0, sticky="nsew")
         tracks2_scrollbar.grid(row=0, column=1, sticky="ns")
         tracks2_h_scrollbar.grid(row=1, column=0, sticky="ew")
-        
+
         # Configure grid weights for tracks2 frame
         tracks2_frame.grid_rowconfigure(0, weight=1)
         tracks2_frame.grid_columnconfigure(0, weight=1)

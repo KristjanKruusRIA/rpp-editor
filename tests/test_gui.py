@@ -1151,7 +1151,7 @@ class TestGUIWidgetConfiguration:
         # Verify xscrollcommand is configured (horizontal scrolling)
         assert "xscrollcommand" in tracks1_tree_config
         assert "xscrollcommand" in tracks2_tree_config
-        
+
         # Verify yscrollcommand is configured (vertical scrolling)
         assert "yscrollcommand" in tracks1_tree_config
         assert "yscrollcommand" in tracks2_tree_config

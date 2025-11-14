@@ -138,10 +138,11 @@ class RPPEditorGUI:
         self.tracks1_tree.heading("pan", text="Pan")
         self.tracks1_tree.heading("effects", text="Effects")
 
-        self.tracks1_tree.column("#0", width=200)
-        self.tracks1_tree.column("volume", width=80)
-        self.tracks1_tree.column("pan", width=80)
-        self.tracks1_tree.column("effects", width=300)
+        # Initial column configuration (will be auto-resized when data is loaded)
+        self.tracks1_tree.column("#0", width=200, stretch=False)  # Increased default width
+        self.tracks1_tree.column("volume", width=100, stretch=False)
+        self.tracks1_tree.column("pan", width=100, stretch=False)
+        self.tracks1_tree.column("effects", width=400, stretch=False)  # Increased default width
 
         tracks1_scrollbar = ttk.Scrollbar(
             tracks1_frame, orient=tk.VERTICAL, command=self.tracks1_tree.yview
@@ -167,10 +168,11 @@ class RPPEditorGUI:
         self.tracks2_tree.heading("pan", text="Pan")
         self.tracks2_tree.heading("effects", text="Effects")
 
-        self.tracks2_tree.column("#0", width=200)
-        self.tracks2_tree.column("volume", width=80)
-        self.tracks2_tree.column("pan", width=80)
-        self.tracks2_tree.column("effects", width=300)
+        # Initial column configuration (will be auto-resized when data is loaded)
+        self.tracks2_tree.column("#0", width=200, stretch=False)  # Increased default width
+        self.tracks2_tree.column("volume", width=100, stretch=False)
+        self.tracks2_tree.column("pan", width=100, stretch=False)
+        self.tracks2_tree.column("effects", width=400, stretch=False)  # Increased default width
 
         tracks2_scrollbar = ttk.Scrollbar(
             tracks2_frame, orient=tk.VERTICAL, command=self.tracks2_tree.yview
@@ -182,28 +184,20 @@ class RPPEditorGUI:
         )
         self.tracks2_tree.configure(xscrollcommand=tracks2_h_scrollbar.set)
 
-        # Pack frames with grid layout for better scrollbar support
+        # Pack the frames first
         tracks1_frame.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=True)
-
-        # Grid layout for tracks1 frame
-        self.tracks1_tree.grid(row=0, column=0, sticky="nsew")
-        tracks1_scrollbar.grid(row=0, column=1, sticky="ns")
-        tracks1_h_scrollbar.grid(row=1, column=0, sticky="ew")
-
-        # Configure grid weights for tracks1 frame
-        tracks1_frame.grid_rowconfigure(0, weight=1)
-        tracks1_frame.grid_columnconfigure(0, weight=1)
-
         tracks2_frame.pack(side=tk.RIGHT, padx=5, pady=5, fill=tk.BOTH, expand=True)
 
-        # Grid layout for tracks2 frame
-        self.tracks2_tree.grid(row=0, column=0, sticky="nsew")
-        tracks2_scrollbar.grid(row=0, column=1, sticky="ns")
-        tracks2_h_scrollbar.grid(row=1, column=0, sticky="ew")
+        # Pack scrollbars first, then treeview to ensure proper layout
+        # Tracks1 (left side)
+        tracks1_h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        tracks1_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.tracks1_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Configure grid weights for tracks2 frame
-        tracks2_frame.grid_rowconfigure(0, weight=1)
-        tracks2_frame.grid_columnconfigure(0, weight=1)
+        # Tracks2 (right side)
+        tracks2_h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        tracks2_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.tracks2_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Bind selection events
         self.tracks1_tree.bind("<<TreeviewSelect>>", self.on_track1_select)
@@ -378,6 +372,70 @@ class RPPEditorGUI:
 
         # Highlight differences
         self.highlight_differences()
+
+        # Auto-resize columns to fit content
+        self.auto_resize_columns()
+
+    def auto_resize_columns(self):
+        """Automatically resize columns to fit their content."""
+        import tkinter.font as tkFont
+
+        # Get the default font for the treeview
+        try:
+            font = tkFont.Font(font=self.tracks1_tree.cget("font"))
+        except:
+            # Fallback to default font
+            font = tkFont.Font(family="TkDefaultFont", size=9)
+
+        def calculate_column_width(tree, column_id):
+            """Calculate the optimal width for a column based on its content."""
+            max_width = 100  # Starting minimum width
+
+            # Check header width
+            if column_id == "#0":
+                header_text = "Track Name"
+            else:
+                header_text = tree.heading(column_id)["text"]
+            header_width = font.measure(header_text) + 40  # Increased padding
+            max_width = max(max_width, header_width)
+
+            # Check all items in the tree
+            for item in tree.get_children():
+                if column_id == "#0":
+                    text = tree.item(item, "text")
+                else:
+                    values = tree.item(item, "values")
+                    col_index = {"volume": 0, "pan": 1, "effects": 2}.get(column_id)
+                    if col_index is not None and col_index < len(values):
+                        text = values[col_index]
+                    else:
+                        text = ""
+
+                if text:
+                    # Increased padding to ensure text isn't cut off
+                    text_width = font.measure(str(text)) + 50
+                    max_width = max(max_width, text_width)
+
+            # Set more generous limits based on column type
+            if column_id == "#0":  # Track Name
+                max_width = min(max_width, 500)  # Increased from 400px
+                max_width = max(max_width, 200)  # Increased from 150px - more room for track names
+            elif column_id in ["volume", "pan"]:  # Numeric columns
+                max_width = min(max_width, 120)
+                max_width = max(max_width, 100)  # Increased from 80px
+            else:  # Effects column
+                max_width = min(
+                    max_width, 1200
+                )  # Increased from 600px - more room for long effect lists
+                max_width = max(max_width, 300)  # Increased from 200px
+
+            return max_width
+
+        # Auto-resize columns for both trees
+        for tree in [self.tracks1_tree, self.tracks2_tree]:
+            for col_id in ["#0", "volume", "pan", "effects"]:
+                width = calculate_column_width(tree, col_id)
+                tree.column(col_id, width=width, stretch=False)
 
     def highlight_differences(self):
         """Highlight tracks with differences between the two files."""

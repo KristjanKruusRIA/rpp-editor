@@ -1155,3 +1155,43 @@ class TestGUIWidgetConfiguration:
         # Verify yscrollcommand is configured (vertical scrolling)
         assert "yscrollcommand" in tracks1_tree_config
         assert "yscrollcommand" in tracks2_tree_config
+
+    def test_auto_resize_columns(self, gui_app):
+        """Test that columns automatically resize to fit content."""
+        app, root = gui_app
+
+        # Insert test data with varying content lengths
+        app.tracks1_tree.insert("", "end", text="Short", values=("1.0", "0.0", "Effect"))
+        app.tracks1_tree.insert(
+            "",
+            "end",
+            text="Very Long Track Name For Testing Auto Resize",
+            values=(
+                "0.123456",
+                "-0.987654",
+                "Very Long Effect Name That Should Trigger Wider Columns",
+            ),
+        )
+
+        # Get initial widths
+        initial_widths = [
+            app.tracks1_tree.column("#0", "width"),
+            app.tracks1_tree.column("effects", "width"),
+        ]
+
+        # Call auto-resize
+        app.auto_resize_columns()
+
+        # Get new widths
+        new_widths = [
+            app.tracks1_tree.column("#0", "width"),
+            app.tracks1_tree.column("effects", "width"),
+        ]
+
+        # Verify columns expanded to accommodate content
+        assert new_widths[0] >= initial_widths[0]  # Track name column should be wider
+        assert new_widths[1] >= initial_widths[1]  # Effects column should be wider
+
+        # Verify reasonable limits are applied
+        assert new_widths[0] <= 400  # Track name shouldn't exceed 400px
+        assert new_widths[1] <= 600  # Effects shouldn't exceed 600px

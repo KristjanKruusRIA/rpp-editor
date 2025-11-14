@@ -290,9 +290,7 @@ class TestFileSaving:
         original_track_count = len(parser.tracks)
 
         # Save to temporary file
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".rpp", delete=False
-        ) as temp_save:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as temp_save:
             save_path = temp_save.name
 
         try:
@@ -311,9 +309,7 @@ class TestFileSaving:
 
             # Verify regular tracks are preserved
             regular_original = next(t for t in parser.tracks if not t.is_master)
-            regular_reloaded = next(
-                t for t in parser_reloaded.tracks if not t.is_master
-            )
+            regular_reloaded = next(t for t in parser_reloaded.tracks if not t.is_master)
             assert regular_original.name == regular_reloaded.name
             assert regular_original.volume == regular_reloaded.volume
         finally:

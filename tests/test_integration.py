@@ -93,9 +93,7 @@ class TestIntegration:
             parser2.copy_track_settings(master1, master2, copy_effects=True)
 
             # Copy track settings from file1 to file2
-            parser2.copy_track_settings(
-                track1, track2, copy_volume=True, copy_effects=True
-            )
+            parser2.copy_track_settings(track1, track2, copy_volume=True, copy_effects=True)
 
             # Verify changes
             assert master2.effects[0]["name"] == master1.effects[0]["name"]

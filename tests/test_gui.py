@@ -403,9 +403,7 @@ class TestFileSaving:
 
     @patch("tkinter.filedialog.asksaveasfilename")
     @patch("tkinter.messagebox.showinfo")
-    def test_save_file_as_success(
-        self, mock_info, mock_filedialog, gui_app, temp_rpp_file
-    ):
+    def test_save_file_as_success(self, mock_info, mock_filedialog, gui_app, temp_rpp_file):
         """Test save as functionality."""
         app, root = gui_app
 

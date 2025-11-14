@@ -1,7 +1,7 @@
 # RPP Editor - REAPER Project File Editor
 
 [![RPP Editor CI](https://github.com/KristjanKruusRIA/rpp-editor/workflows/RPP%20Editor%20CI/badge.svg)](https://github.com/KristjanKruusRIA/rpp-editor/actions)
-[![Coverage](https://codecov.io/gh/KristjanKruusRIA/rpp-editor/branch/main/graph/badge.svg)](https://codecov.io/gh/KristjanKruusRIA/rpp-editor)
+[![codecov](https://codecov.io/gh/KristjanKruusRIA/rpp-editor/graph/badge.svg?token=LXT0AMGQR8)](https://codecov.io/gh/KristjanKruusRIA/rpp-editor)
 
 A GUI application for editing and comparing REAPER project files (.rpp). This tool allows you to load two RPP files, compare their tracks and master track, and copy settings between them.
 

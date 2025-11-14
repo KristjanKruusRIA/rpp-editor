@@ -148,6 +148,11 @@ class RPPEditorGUI:
         )
         self.tracks1_tree.configure(yscrollcommand=tracks1_scrollbar.set)
 
+        tracks1_h_scrollbar = ttk.Scrollbar(
+            tracks1_frame, orient=tk.HORIZONTAL, command=self.tracks1_tree.xview
+        )
+        self.tracks1_tree.configure(xscrollcommand=tracks1_h_scrollbar.set)
+
         # File 2 tracks
         tracks2_frame = ttk.LabelFrame(self.comparison_frame, text="File 2 Tracks", padding=10)
 
@@ -172,14 +177,33 @@ class RPPEditorGUI:
         )
         self.tracks2_tree.configure(yscrollcommand=tracks2_scrollbar.set)
 
-        # Pack frames
+        tracks2_h_scrollbar = ttk.Scrollbar(
+            tracks2_frame, orient=tk.HORIZONTAL, command=self.tracks2_tree.xview
+        )
+        self.tracks2_tree.configure(xscrollcommand=tracks2_h_scrollbar.set)
+
+        # Pack frames with grid layout for better scrollbar support
         tracks1_frame.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.BOTH, expand=True)
-        self.tracks1_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        tracks1_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Grid layout for tracks1 frame
+        self.tracks1_tree.grid(row=0, column=0, sticky="nsew")
+        tracks1_scrollbar.grid(row=0, column=1, sticky="ns")
+        tracks1_h_scrollbar.grid(row=1, column=0, sticky="ew")
+        
+        # Configure grid weights for tracks1 frame
+        tracks1_frame.grid_rowconfigure(0, weight=1)
+        tracks1_frame.grid_columnconfigure(0, weight=1)
 
         tracks2_frame.pack(side=tk.RIGHT, padx=5, pady=5, fill=tk.BOTH, expand=True)
-        self.tracks2_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        tracks2_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Grid layout for tracks2 frame
+        self.tracks2_tree.grid(row=0, column=0, sticky="nsew")
+        tracks2_scrollbar.grid(row=0, column=1, sticky="ns")
+        tracks2_h_scrollbar.grid(row=1, column=0, sticky="ew")
+        
+        # Configure grid weights for tracks2 frame
+        tracks2_frame.grid_rowconfigure(0, weight=1)
+        tracks2_frame.grid_columnconfigure(0, weight=1)
 
         # Bind selection events
         self.tracks1_tree.bind("<<TreeviewSelect>>", self.on_track1_select)

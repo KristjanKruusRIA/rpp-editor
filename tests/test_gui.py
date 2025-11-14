@@ -1139,3 +1139,19 @@ class TestGUIWidgetConfiguration:
         # Test text widget
         assert hasattr(app, "diff_text")
         assert hasattr(app, "status_label")
+
+    def test_scrollbar_configuration(self, gui_app):
+        """Test that both horizontal and vertical scrollbars are configured."""
+        app, root = gui_app
+
+        # Check that treeview widgets have scrollbar commands configured
+        tracks1_tree_config = app.tracks1_tree.configure()
+        tracks2_tree_config = app.tracks2_tree.configure()
+
+        # Verify xscrollcommand is configured (horizontal scrolling)
+        assert "xscrollcommand" in tracks1_tree_config
+        assert "xscrollcommand" in tracks2_tree_config
+        
+        # Verify yscrollcommand is configured (vertical scrolling)
+        assert "yscrollcommand" in tracks1_tree_config
+        assert "yscrollcommand" in tracks2_tree_config

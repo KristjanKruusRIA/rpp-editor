@@ -142,7 +142,9 @@ class RPPParser:
                 effect_info = {
                     "type": "VST",
                     "name": vst_element.attrib[1],  # VST name
-                    "plugin_file": (vst_element.attrib[2] if len(vst_element.attrib) > 2 else ""),
+                    "plugin_file": (
+                        vst_element.attrib[2] if len(vst_element.attrib) > 2 else ""
+                    ),
                     "raw_element": vst_element,
                 }
                 effects.append(effect_info)
@@ -225,7 +227,9 @@ class RPPParser:
                 effect_info = {
                     "type": "VST",
                     "name": vst_element.attrib[1],  # VST name
-                    "plugin_file": (vst_element.attrib[2] if len(vst_element.attrib) > 2 else ""),
+                    "plugin_file": (
+                        vst_element.attrib[2] if len(vst_element.attrib) > 2 else ""
+                    ),
                     "raw_element": vst_element,
                 }
                 effects.append(effect_info)
@@ -447,7 +451,9 @@ class RPPParser:
             ),
             "track_count": len(regular_tracks),
             "total_track_count": len(self.tracks),  # Including master
-            "has_master_effects": any(track.is_master and track.effects for track in self.tracks),
+            "has_master_effects": any(
+                track.is_master and track.effects for track in self.tracks
+            ),
             "tempo": 120,  # Default
         }
 

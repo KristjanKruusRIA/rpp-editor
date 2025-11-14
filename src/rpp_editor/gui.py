@@ -2,10 +2,11 @@
 RPP Editor GUI - A GUI application for editing and comparing REAPER project files
 """
 
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-from typing import Optional
 import os
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+from typing import Optional
+
 from .parser import RPPParser, TrackInfo, compare_tracks
 
 

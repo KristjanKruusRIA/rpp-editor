@@ -3,10 +3,11 @@ RPP Parser Module for REAPER Project Files
 Provides functionality to parse, compare, and modify REAPER project files.
 """
 
-import rpp
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
 import copy
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import rpp
 
 
 @dataclass

@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rpp-editor"
+version = "1.0.0"
+description = "A GUI application for editing and comparing REAPER project files (.rpp)"
+authors = [
+    {name = "RPP Editor Contributors"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+dependencies = [
+    "rpp>=0.5",
+    "attrs>=21.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "flake8>=6.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/KristjanKruusRIA/rpp-editor"
+Repository = "https://github.com/KristjanKruusRIA/rpp-editor"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]

@@ -2,8 +2,8 @@
 Integration tests for the complete RPP editor functionality
 """
 
-import tempfile
 import os
+import tempfile
 
 from rpp_editor import RPPParser
 

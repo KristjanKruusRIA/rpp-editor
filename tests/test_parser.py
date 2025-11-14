@@ -2,9 +2,10 @@
 Tests for the RPP parser functionality
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
+
+import pytest
 
 from rpp_editor import RPPParser, TrackInfo, compare_tracks
 

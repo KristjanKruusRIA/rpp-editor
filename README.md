@@ -159,7 +159,7 @@ The application is built with a clean separation of concerns:
 - **`gui.py`**: Tkinter-based GUI with professional layout
 - **`TrackInfo`**: Dataclass representing track information
 - **Deep copying**: Ensures source files aren't modified during operations
-- **Structure preservation**: Maintains exact REAPER project structure including WAK elements
+- **Structure preservation**: Maintains exact REAPER project structure
 
 ## Troubleshooting
 
@@ -168,7 +168,6 @@ The application is built with a clean separation of concerns:
 1. **File not loading**: Ensure the RPP file is valid and not corrupted
 2. **Missing effects**: Some effect types may not be fully supported
 3. **Save errors**: Check file permissions and disk space
-4. **WAK errors in REAPER**: This has been fixed - effects are now copied with complete structure
 
 ### Error Messages
 
@@ -210,7 +209,6 @@ This project uses the RPP library by Perlence, which is licensed under BSD-3-Cla
 
 ### v1.0.0
 - ✅ Complete master track support
-- ✅ WAK element preservation
 - ✅ Structure-preserving effect copying
 - ✅ Professional GUI with visual track differences
 - ✅ Comprehensive test suite

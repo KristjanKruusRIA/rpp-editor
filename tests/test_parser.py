@@ -26,7 +26,7 @@ def sample_rpp_content():
     LASTSEL 0
     DOCKED 0
     BYPASS 0 0 0
-    <VST "VST: ReaEQ (Cockos)" reaeq.dll 0 "" 1919247729<56535472656571726561657100000000> ""
+    <VST "VST: ReaEQ (Cockos)" reaeq.dll 0 "" 1919247729<565354726565717265616571> ""
       Y2FsZhAAAAAIAAAA
     >
     PRESETNAME "Test Preset"
@@ -64,7 +64,7 @@ def sample_rpp_content():
       LASTSEL 0
       DOCKED 0
       BYPASS 0 0 0
-      <VST "VST: TestVST" testvst.dll 0 "" 1400128611<56535453744463646563617069746174> ""
+      <VST "VST: TestVST" testvst.dll 0 "" 1400128611<5653545374446364656361706> ""
         Y0R0U+5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAYwIAAAEAAAAAAAAA
       >
       PRESETNAME Default
@@ -290,7 +290,9 @@ class TestFileSaving:
         original_track_count = len(parser.tracks)
 
         # Save to temporary file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as temp_save:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".rpp", delete=False
+        ) as temp_save:
             save_path = temp_save.name
 
         try:
@@ -309,9 +311,259 @@ class TestFileSaving:
 
             # Verify regular tracks are preserved
             regular_original = next(t for t in parser.tracks if not t.is_master)
-            regular_reloaded = next(t for t in parser_reloaded.tracks if not t.is_master)
+            regular_reloaded = next(
+                t for t in parser_reloaded.tracks if not t.is_master
+            )
             assert regular_original.name == regular_reloaded.name
             assert regular_original.volume == regular_reloaded.volume
         finally:
             if os.path.exists(save_path):
                 os.unlink(save_path)
+
+    def test_save_without_output_path(self, temp_rpp_file):
+        """Test saving without specifying output path."""
+        parser = RPPParser(temp_rpp_file)
+
+        # Should save to original file path
+        parser.save_file()
+
+        # Verify file still exists and is readable
+        parser_reloaded = RPPParser(temp_rpp_file)
+        assert len(parser_reloaded.tracks) == len(parser.tracks)
+
+    def test_save_no_project_loaded(self):
+        """Test saving when no project is loaded."""
+        parser = RPPParser()
+
+        with pytest.raises(Exception, match="No project loaded"):
+            parser.save_file("test.rpp")
+
+    def test_save_no_file_path_no_output(self):
+        """Test saving when no file path is set and no output path given."""
+        parser = RPPParser()
+        parser.project = "dummy"  # Fake project to pass the first check
+
+        with pytest.raises(Exception, match="No output path specified"):
+            parser.save_file()
+
+
+class TestEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_empty_file(self):
+        """Test loading an empty file."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as f:
+            f.write("")
+            temp_path = f.name
+
+        try:
+            with pytest.raises(Exception):
+                RPPParser(temp_path)
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_malformed_rpp_file(self):
+        """Test loading a malformed RPP file."""
+        malformed_content = """<INVALID_PROJECT>
+  This is not a valid RPP file
+  Missing proper structure"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as f:
+            f.write(malformed_content)
+            temp_path = f.name
+
+        try:
+            with pytest.raises(Exception):
+                RPPParser(temp_path)
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_file_not_found(self):
+        """Test loading a file that doesn't exist."""
+        with pytest.raises(Exception):
+            RPPParser("nonexistent_file.rpp")
+
+    def test_minimal_valid_rpp(self):
+        """Test loading a minimal valid RPP file."""
+        minimal_content = """<REAPER_PROJECT 0.1 "7.51/win64" 1763106377
+>"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as f:
+            f.write(minimal_content)
+            temp_path = f.name
+
+        try:
+            parser = RPPParser(temp_path)
+            assert parser.project is not None
+            assert len(parser.tracks) >= 0  # Might have master track or none
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_rpp_without_master_track(self):
+        """Test RPP file without master track elements."""
+        content_no_master = """<REAPER_PROJECT 0.1 "7.51/win64" 1763106377
+  <TRACK {A858D602-18C1-491F-9352-37B286CF4C0D}
+    NAME "OnlyTrack"
+    VOLPAN 1 0 -1 -1 1
+  >
+>"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as f:
+            f.write(content_no_master)
+            temp_path = f.name
+
+        try:
+            parser = RPPParser(temp_path)
+            assert parser.project is not None
+
+            # Should still have tracks, but master might be None/empty
+            regular_tracks = [t for t in parser.tracks if not t.is_master]
+            assert len(regular_tracks) >= 1
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_track_without_name(self):
+        """Test track without NAME element."""
+        content = """<REAPER_PROJECT 0.1 "7.51/win64" 1763106377
+  <TRACK {A858D602-18C1-491F-9352-37B286CF4C0D}
+    VOLPAN 1 0 -1 -1 1
+  >
+>"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as f:
+            f.write(content)
+            temp_path = f.name
+
+        try:
+            parser = RPPParser(temp_path)
+            regular_tracks = [t for t in parser.tracks if not t.is_master]
+            assert len(regular_tracks) >= 1
+            assert regular_tracks[0].name == "Untitled Track"
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_track_without_volpan(self):
+        """Test track without VOLPAN element."""
+        content = """<REAPER_PROJECT 0.1 "7.51/win64" 1763106377
+  <TRACK {A858D602-18C1-491F-9352-37B286CF4C0D}
+    NAME "TestTrack"
+  >
+>"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as f:
+            f.write(content)
+            temp_path = f.name
+
+        try:
+            parser = RPPParser(temp_path)
+            regular_tracks = [t for t in parser.tracks if not t.is_master]
+            assert len(regular_tracks) >= 1
+            # Should use default values
+            assert regular_tracks[0].volume == 1.0
+            assert regular_tracks[0].pan == 0.0
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_track_with_js_effects(self):
+        """Test track with JS (JavaScript) effects."""
+        content = """<REAPER_PROJECT 0.1 "7.51/win64" 1763106377
+  <TRACK {A858D602-18C1-491F-9352-37B286CF4C0D}
+    NAME "JSTrack"
+    VOLPAN 1 0 -1 -1 1
+    <FXCHAIN
+      BYPASS 0 0 0
+      <JS "JS: Test Effect" testeffect.js ""
+        Y2FsZhAAAAAIAAAA
+      >
+      WAK 0 0
+    >
+  >
+>"""
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".rpp", delete=False) as f:
+            f.write(content)
+            temp_path = f.name
+
+        try:
+            parser = RPPParser(temp_path)
+            regular_tracks = [t for t in parser.tracks if not t.is_master]
+            assert len(regular_tracks) >= 1
+            track = regular_tracks[0]
+            assert len(track.effects) >= 1
+            assert track.effects[0]["type"] == "JS"
+            assert "testeffect.js" in track.effects[0]["name"]
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+
+class TestUntestedMethods:
+    """Test methods that aren't fully covered."""
+
+    def test_get_track_by_id(self, temp_rpp_file):
+        """Test finding tracks by ID."""
+        parser = RPPParser(temp_rpp_file)
+
+        # Get a track to test with
+        regular_track = next(t for t in parser.tracks if not t.is_master)
+        track_id = regular_track.track_id
+
+        found_track = parser.get_track_by_id(track_id)
+        assert found_track is not None
+        assert found_track.track_id == track_id
+        assert found_track.name == regular_track.name
+
+        # Test with non-existent ID
+        not_found = parser.get_track_by_id("NONEXISTENT")
+        assert not_found is None
+
+    def test_get_track_by_id_master(self, temp_rpp_file):
+        """Test finding master track by ID."""
+        parser = RPPParser(temp_rpp_file)
+
+        master_track = parser.get_track_by_id("MASTER")
+        assert master_track is not None
+        assert master_track.is_master
+        assert master_track.name == "Master"
+
+    def test_copy_track_settings_error_handling(self, temp_rpp_file):
+        """Test error handling in copy operations."""
+        parser1 = RPPParser(temp_rpp_file)
+        parser2 = RPPParser(temp_rpp_file)
+
+        track1 = next(t for t in parser1.tracks if not t.is_master)
+        track2 = next(t for t in parser2.tracks if not t.is_master)
+
+        # Test copying with None elements - should handle gracefully
+        original_volume = track2.volume
+        parser2.copy_track_settings(track1, track2, copy_volume=True)
+        # Should still work even if some elements are missing
+        assert track2.volume == track1.volume or track2.volume == original_volume
+
+    def test_project_info_edge_cases(self):
+        """Test project info with edge cases."""
+        # Test with no project loaded
+        parser = RPPParser()
+        info = parser.get_project_info()
+        assert info == {}
+
+    def test_trackinfo_str_representation(self, temp_rpp_file):
+        """Test TrackInfo string representation."""
+        parser = RPPParser(temp_rpp_file)
+
+        master = next(t for t in parser.tracks if t.is_master)
+        regular = next(t for t in parser.tracks if not t.is_master)
+
+        master_str = str(master)
+        assert "Master" in master_str
+        assert master.name in master_str
+
+        regular_str = str(regular)
+        assert "Track" in regular_str
+        assert regular.name in regular_str

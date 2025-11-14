@@ -89,9 +89,7 @@ class RPPEditorGUI:
         self.file1_entry = ttk.Entry(
             file1_frame, textvariable=self.file1_var, width=50, state="readonly"
         )
-        self.file1_button = ttk.Button(
-            file1_frame, text="Browse...", command=self.load_file1
-        )
+        self.file1_button = ttk.Button(file1_frame, text="Browse...", command=self.load_file1)
 
         self.file1_info_var = tk.StringVar()
         self.file1_info_label = ttk.Label(
@@ -105,9 +103,7 @@ class RPPEditorGUI:
         self.file2_entry = ttk.Entry(
             file2_frame, textvariable=self.file2_var, width=50, state="readonly"
         )
-        self.file2_button = ttk.Button(
-            file2_frame, text="Browse...", command=self.load_file2
-        )
+        self.file2_button = ttk.Button(file2_frame, text="Browse...", command=self.load_file2)
 
         self.file2_info_var = tk.StringVar()
         self.file2_info_label = ttk.Label(
@@ -129,9 +125,7 @@ class RPPEditorGUI:
         """Create track comparison widgets."""
 
         # File 1 tracks
-        tracks1_frame = ttk.LabelFrame(
-            self.comparison_frame, text="File 1 Tracks", padding=10
-        )
+        tracks1_frame = ttk.LabelFrame(self.comparison_frame, text="File 1 Tracks", padding=10)
 
         self.tracks1_tree = ttk.Treeview(
             tracks1_frame,
@@ -155,9 +149,7 @@ class RPPEditorGUI:
         self.tracks1_tree.configure(yscrollcommand=tracks1_scrollbar.set)
 
         # File 2 tracks
-        tracks2_frame = ttk.LabelFrame(
-            self.comparison_frame, text="File 2 Tracks", padding=10
-        )
+        tracks2_frame = ttk.LabelFrame(self.comparison_frame, text="File 2 Tracks", padding=10)
 
         self.tracks2_tree = ttk.Treeview(
             tracks2_frame,
@@ -197,9 +189,7 @@ class RPPEditorGUI:
         """Create control buttons."""
 
         # Copy buttons frame
-        copy_frame = ttk.LabelFrame(
-            self.control_frame, text="Copy Track Settings", padding=10
-        )
+        copy_frame = ttk.LabelFrame(self.control_frame, text="Copy Track Settings", padding=10)
 
         self.copy_left_button = ttk.Button(
             copy_frame,
@@ -224,22 +214,16 @@ class RPPEditorGUI:
         copy_volume_check = ttk.Checkbutton(
             copy_options_frame, text="Volume", variable=self.copy_volume_var
         )
-        copy_pan_check = ttk.Checkbutton(
-            copy_options_frame, text="Pan", variable=self.copy_pan_var
-        )
+        copy_pan_check = ttk.Checkbutton(copy_options_frame, text="Pan", variable=self.copy_pan_var)
         copy_effects_check = ttk.Checkbutton(
             copy_options_frame, text="Effects", variable=self.copy_effects_var
         )
 
         # Differences frame
-        diff_frame = ttk.LabelFrame(
-            self.control_frame, text="Track Differences", padding=10
-        )
+        diff_frame = ttk.LabelFrame(self.control_frame, text="Track Differences", padding=10)
 
         self.diff_text = tk.Text(diff_frame, height=8, width=80, state="disabled")
-        diff_scrollbar = ttk.Scrollbar(
-            diff_frame, orient=tk.VERTICAL, command=self.diff_text.yview
-        )
+        diff_scrollbar = ttk.Scrollbar(diff_frame, orient=tk.VERTICAL, command=self.diff_text.yview)
         self.diff_text.configure(yscrollcommand=diff_scrollbar.set)
 
         # Pack widgets
@@ -521,12 +505,8 @@ class RPPEditorGUI:
             if file_path:
                 try:
                     self.parser1.save_file(file_path)
-                    self.status_var.set(
-                        f"File 1 saved as {os.path.basename(file_path)}"
-                    )
-                    messagebox.showinfo(
-                        "Success", f"File saved as {os.path.basename(file_path)}"
-                    )
+                    self.status_var.set(f"File 1 saved as {os.path.basename(file_path)}")
+                    messagebox.showinfo("Success", f"File saved as {os.path.basename(file_path)}")
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to save file:\n{str(e)}")
 
@@ -552,12 +532,8 @@ class RPPEditorGUI:
             if file_path:
                 try:
                     self.parser2.save_file(file_path)
-                    self.status_var.set(
-                        f"File 2 saved as {os.path.basename(file_path)}"
-                    )
-                    messagebox.showinfo(
-                        "Success", f"File saved as {os.path.basename(file_path)}"
-                    )
+                    self.status_var.set(f"File 2 saved as {os.path.basename(file_path)}")
+                    messagebox.showinfo("Success", f"File saved as {os.path.basename(file_path)}")
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to save file:\n{str(e)}")
 

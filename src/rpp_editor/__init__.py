@@ -1,0 +1,12 @@
+"""
+RPP Editor - REAPER Project File Editor
+
+A Python package for parsing, comparing, and editing REAPER project files (.rpp).
+"""
+
+from .parser import RPPParser, TrackInfo, compare_tracks
+from .gui import RPPEditorGUI
+
+__version__ = "1.0.0"
+__author__ = "RPP Editor Contributors"
+__all__ = ["RPPParser", "TrackInfo", "compare_tracks", "RPPEditorGUI"]

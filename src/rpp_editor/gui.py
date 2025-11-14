@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from typing import Optional, Dict, Any
 import os
-from rpp_parser import RPPParser, TrackInfo, compare_tracks
+from .parser import RPPParser, TrackInfo, compare_tracks
 
 
 class RPPEditorGUI:
@@ -234,7 +234,7 @@ class RPPEditorGUI:
                 
                 # Update info
                 info = self.parser1.get_project_info()
-                self.file1_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Tempo: {info['tempo']}")
+                self.file1_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Master FX: {'Yes' if info['has_master_effects'] else 'No'}, Tempo: {info['tempo']}")
                 
                 # Update tracks list
                 self.update_tracks_display()
@@ -259,7 +259,7 @@ class RPPEditorGUI:
                 
                 # Update info
                 info = self.parser2.get_project_info()
-                self.file2_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Tempo: {info['tempo']}")
+                self.file2_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Master FX: {'Yes' if info['has_master_effects'] else 'No'}, Tempo: {info['tempo']}")
                 
                 # Update tracks list
                 self.update_tracks_display()
@@ -283,15 +283,21 @@ class RPPEditorGUI:
         if self.parser1:
             for i, track in enumerate(self.parser1.tracks):
                 effects_str = ", ".join([fx['name'] for fx in track.effects])
-                self.tracks1_tree.insert("", "end", iid=str(i), text=track.name,
-                                       values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str))
+                # Use different formatting for master track
+                display_name = f"🎛️ {track.name}" if track.is_master else track.name
+                self.tracks1_tree.insert("", "end", iid=str(i), text=display_name,
+                                       values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str),
+                                       tags=("master",) if track.is_master else ())
         
         # Populate tracks from file 2
         if self.parser2:
             for i, track in enumerate(self.parser2.tracks):
                 effects_str = ", ".join([fx['name'] for fx in track.effects])
-                self.tracks2_tree.insert("", "end", iid=str(i), text=track.name,
-                                       values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str))
+                # Use different formatting for master track
+                display_name = f"🎛️ {track.name}" if track.is_master else track.name
+                self.tracks2_tree.insert("", "end", iid=str(i), text=display_name,
+                                       values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str),
+                                       tags=("master",) if track.is_master else ())
         
         # Highlight differences
         self.highlight_differences()
@@ -321,6 +327,8 @@ class RPPEditorGUI:
         # Configure tags
         self.tracks1_tree.tag_configure("different", background="#ffcccc")
         self.tracks2_tree.tag_configure("different", background="#ffcccc")
+        self.tracks1_tree.tag_configure("master", background="#e6f3ff", font=("TkDefaultFont", 9, "bold"))
+        self.tracks2_tree.tag_configure("master", background="#e6f3ff", font=("TkDefaultFont", 9, "bold"))
     
     def on_track1_select(self, event):
         """Handle track selection in file 1."""
@@ -492,7 +500,7 @@ def main():
             app.parser1 = RPPParser("test1.rpp")
             app.file1_var.set("test1.rpp")
             info = app.parser1.get_project_info()
-            app.file1_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Tempo: {info['tempo']}")
+            app.file1_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Master FX: {'Yes' if info['has_master_effects'] else 'No'}, Tempo: {info['tempo']}")
         except:
             pass
     
@@ -501,7 +509,7 @@ def main():
             app.parser2 = RPPParser("test2.rpp")
             app.file2_var.set("test2.rpp")
             info = app.parser2.get_project_info()
-            app.file2_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Tempo: {info['tempo']}")
+            app.file2_info_var.set(f"Version: {info['version']}, Tracks: {info['track_count']}, Master FX: {'Yes' if info['has_master_effects'] else 'No'}, Tempo: {info['tempo']}")
         except:
             pass
     

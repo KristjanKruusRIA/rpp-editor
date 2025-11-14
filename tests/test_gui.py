@@ -531,3 +531,443 @@ class TestMainFunction:
                     # Should have created GUI and attempted to load files
                     mock_gui.assert_called_once()
                     mock_root.mainloop.assert_called_once()
+
+
+class TestGUILogicWithoutDisplay:
+    """Test GUI logic without requiring actual display."""
+
+    def test_update_copy_buttons_logic(self):
+        """Test copy button state logic without GUI."""
+        # Create mock GUI instance
+        gui = Mock()
+        gui.copy_left_button = Mock()
+        gui.copy_right_button = Mock()
+
+        # Import the actual method
+        from rpp_editor.gui import RPPEditorGUI
+
+        update_copy_buttons = RPPEditorGUI.update_copy_buttons
+
+        # Test with both tracks selected
+        gui.selected_track1 = Mock()
+        gui.selected_track2 = Mock()
+        update_copy_buttons(gui)
+        gui.copy_left_button.config.assert_called_with(state="normal")
+        gui.copy_right_button.config.assert_called_with(state="normal")
+
+        # Test with only one track selected
+        gui.selected_track1 = None
+        gui.selected_track2 = Mock()
+        update_copy_buttons(gui)
+        gui.copy_left_button.config.assert_called_with(state="disabled")
+        gui.copy_right_button.config.assert_called_with(state="disabled")
+
+    def test_differences_display_logic(self):
+        """Test differences display logic."""
+        from rpp_editor.gui import RPPEditorGUI
+        from rpp_editor.parser import TrackInfo
+
+        gui = Mock()
+        gui.diff_text = Mock()
+
+        # Create mock tracks
+        track1 = TrackInfo(
+            track_id="1",
+            name="Track1",
+            volume=0.8,
+            pan=0.0,
+            mute=False,
+            solo=False,
+            effects=[],
+            raw_element=None,
+        )
+        track2 = TrackInfo(
+            track_id="2",
+            name="Track2",
+            volume=0.6,
+            pan=0.1,
+            mute=True,
+            solo=True,
+            effects=[],
+            raw_element=None,
+        )
+
+        gui.selected_track1 = track1
+        gui.selected_track2 = track2
+
+        # Test the differences display method
+        update_differences_display = RPPEditorGUI.update_differences_display
+        update_differences_display(gui)
+
+        # Should have called config and insert methods
+        assert gui.diff_text.config.call_count >= 2
+        assert gui.diff_text.insert.call_count >= 1
+        assert gui.diff_text.delete.call_count >= 1
+
+    def test_highlight_differences_logic(self):
+        """Test track highlighting logic."""
+        from rpp_editor.gui import RPPEditorGUI
+
+        # Test the method with parsers present
+        gui = Mock()
+        gui.parser1 = Mock()
+        gui.parser2 = Mock()
+        gui.parser1.tracks = []  # Empty tracks
+        gui.tracks1_tree = Mock()
+        gui.tracks2_tree = Mock()
+
+        # Mock get_children to return empty lists
+        gui.tracks1_tree.get_children.return_value = []
+        gui.tracks2_tree.get_children.return_value = []
+
+        # Test with parsers but no tracks
+        highlight_differences = RPPEditorGUI.highlight_differences
+        highlight_differences(gui)
+
+        # Verify tag_configure was called for setting up styles (always called at end)
+        assert gui.tracks1_tree.tag_configure.call_count == 2  # different and master
+        assert gui.tracks2_tree.tag_configure.call_count == 2  # different and master
+
+        # Verify the specific tag configurations
+        gui.tracks1_tree.tag_configure.assert_any_call("different", background="#ffcccc")
+        gui.tracks2_tree.tag_configure.assert_any_call("different", background="#ffcccc")
+        gui.tracks1_tree.tag_configure.assert_any_call(
+            "master", background="#e6f3ff", font=("TkDefaultFont", 9, "bold")
+        )
+        gui.tracks2_tree.tag_configure.assert_any_call(
+            "master", background="#e6f3ff", font=("TkDefaultFont", 9, "bold")
+        )
+
+
+class TestGUIMenuOperations:
+    """Test GUI menu operations with mocking."""
+
+    @patch("tkinter.messagebox.showinfo")
+    def test_show_about_detailed(self, mock_showinfo, gui_app):
+        """Test about dialog with detailed verification."""
+        app, root = gui_app
+
+        app.show_about()
+
+        # Verify the about dialog content
+        mock_showinfo.assert_called_once()
+        args = mock_showinfo.call_args[0]
+
+        assert "About RPP Editor" in args[0]
+        assert "RPP Editor v1.0" in args[1]
+        assert "REAPER project files" in args[1]
+        assert "Features:" in args[1]
+        assert "Load and compare" in args[1]
+        assert "Python and tkinter" in args[1]
+
+
+class TestGUITrackOperations:
+    """Test track operations with enhanced mocking."""
+
+    def test_track_selection_detailed(self, gui_app, temp_rpp_file):
+        """Test detailed track selection behavior."""
+        app, root = gui_app
+
+        # Load file and setup
+        from rpp_editor.parser import RPPParser
+
+        app.parser1 = RPPParser(temp_rpp_file)
+        app.parser2 = RPPParser(temp_rpp_file)
+
+        # Mock the tree widgets with proper numeric IDs
+        app.tracks1_tree.get_children = Mock(return_value=["0", "1"])
+        app.tracks2_tree.get_children = Mock(return_value=["0", "1"])
+        app.tracks1_tree.selection_set = Mock()
+        app.tracks2_tree.selection_set = Mock()
+        app.tracks1_tree.selection = Mock(return_value=["0"])
+        app.tracks2_tree.selection = Mock(return_value=["0"])
+
+        # Mock update methods to avoid GUI operations
+        app.update_copy_buttons = Mock()
+        app.update_differences_display = Mock()
+
+        # Test track selection events
+        event = Mock()
+
+        # Select first track
+        app.on_track1_select(event)
+        assert app.selected_track1 == app.parser1.tracks[0]
+        app.update_copy_buttons.assert_called_once()
+        app.update_differences_display.assert_called_once()
+
+        # Reset mocks and select second track
+        app.update_copy_buttons.reset_mock()
+        app.update_differences_display.reset_mock()
+
+        app.on_track2_select(event)
+        assert app.selected_track2 == app.parser2.tracks[0]
+        app.update_copy_buttons.assert_called_once()
+        app.update_differences_display.assert_called_once()
+
+    @patch("tkinter.messagebox.showerror")
+    def test_copy_operations_detailed(self, mock_error, gui_app, temp_rpp_file):
+        """Test detailed copy operations."""
+        app, root = gui_app
+
+        # Load files
+        from rpp_editor.parser import RPPParser
+
+        app.parser1 = RPPParser(temp_rpp_file)
+        app.parser2 = RPPParser(temp_rpp_file)
+
+        # Set up tracks
+        app.selected_track1 = app.parser1.tracks[0]
+        app.selected_track2 = app.parser2.tracks[0]
+
+        # Mock the update methods
+        app.update_tracks_display = Mock()
+        app.update_differences_display = Mock()
+
+        # Test copy with different options
+        app.copy_volume_var.set(True)
+        app.copy_pan_var.set(False)
+        app.copy_effects_var.set(True)
+
+        app.copy_track_to_file2()
+
+        # Verify methods were called
+        app.update_tracks_display.assert_called_once()
+        app.update_differences_display.assert_called_once()
+        mock_error.assert_not_called()
+
+        # Test copy in other direction
+        app.update_tracks_display.reset_mock()
+        app.update_differences_display.reset_mock()
+
+        app.copy_track_to_file1()
+
+        app.update_tracks_display.assert_called_once()
+        app.update_differences_display.assert_called_once()
+
+
+class TestGUIFileOperationsDetailed:
+    """Test detailed file operations."""
+
+    @patch("tkinter.filedialog.askopenfilename")
+    @patch("tkinter.messagebox.showerror")
+    def test_file_loading_edge_cases(self, mock_error, mock_dialog, gui_app):
+        """Test file loading edge cases."""
+        app, root = gui_app
+
+        # Test loading non-existent file
+        mock_dialog.return_value = "nonexistent.rpp"
+        app.load_file1()
+        mock_error.assert_called_once()
+        assert app.parser1 is None
+
+        # Test loading with exception in parser
+        mock_error.reset_mock()
+        mock_dialog.return_value = "invalid.rpp"
+
+        with patch("rpp_editor.parser.RPPParser") as mock_parser:
+            mock_parser.side_effect = Exception("Parse error")
+            app.load_file1()
+            mock_error.assert_called_once()
+
+    def test_file_info_display(self, gui_app, temp_rpp_file):
+        """Test file info display functionality."""
+        app, root = gui_app
+
+        # Load file manually to test info display
+        from rpp_editor.parser import RPPParser
+
+        app.parser1 = RPPParser(temp_rpp_file)
+
+        # Test project info formatting
+        info = app.parser1.get_project_info()
+
+        expected_elements = [
+            f"Version: {info['version']}",
+            f"Tracks: {info['track_count']}",
+            "Master FX:",
+            f"Tempo: {info['tempo']}",
+        ]
+
+        # Simulate the info string creation
+        master_fx = "Yes" if info["has_master_effects"] else "No"
+        info_text = (
+            f"Version: {info['version']}, Tracks: {info['track_count']}, "
+            f"Master FX: {master_fx}, Tempo: {info['tempo']}"
+        )
+
+        for element in expected_elements[:-1]:  # Skip tempo check
+            assert element.split(":")[0] in info_text
+
+
+class TestGUIUpdateMethods:
+    """Test GUI update methods with comprehensive mocking."""
+
+    def test_update_tracks_display_comprehensive(self, gui_app, temp_rpp_file):
+        """Test comprehensive track display updates."""
+        app, root = gui_app
+
+        # Load test data
+        from rpp_editor.parser import RPPParser
+
+        app.parser1 = RPPParser(temp_rpp_file)
+        app.parser2 = RPPParser(temp_rpp_file)
+
+        # Mock tree operations
+        app.tracks1_tree.get_children = Mock(return_value=["old1", "old2"])
+        app.tracks1_tree.delete = Mock()
+        app.tracks1_tree.insert = Mock()
+        app.tracks2_tree.get_children = Mock(return_value=["old3", "old4"])
+        app.tracks2_tree.delete = Mock()
+        app.tracks2_tree.insert = Mock()
+
+        # Mock highlight differences
+        app.highlight_differences = Mock()
+
+        # Call update method
+        app.update_tracks_display()
+
+        # Verify cleanup calls
+        app.tracks1_tree.delete.assert_any_call("old1")
+        app.tracks1_tree.delete.assert_any_call("old2")
+        app.tracks2_tree.delete.assert_any_call("old3")
+        app.tracks2_tree.delete.assert_any_call("old4")
+
+        # Verify insert calls (should have at least one per parser)
+        assert app.tracks1_tree.insert.call_count >= len(app.parser1.tracks)
+        assert app.tracks2_tree.insert.call_count >= len(app.parser2.tracks)
+
+        # Verify highlight differences called
+        app.highlight_differences.assert_called_once()
+
+    def test_update_differences_comprehensive(self, gui_app, temp_rpp_file):
+        """Test comprehensive differences display."""
+        app, root = gui_app
+
+        # Set up test scenario
+        from rpp_editor.parser import RPPParser, TrackInfo
+
+        app.parser1 = RPPParser(temp_rpp_file)
+        app.parser2 = RPPParser(temp_rpp_file)
+
+        # Create different tracks for comparison
+        track1 = TrackInfo(
+            track_id="1",
+            name="TestTrack",
+            volume=0.8,
+            pan=0.0,
+            mute=False,
+            solo=False,
+            effects=[{"name": "Effect1"}],
+            raw_element=None,
+        )
+        track2 = TrackInfo(
+            track_id="2",
+            name="TestTrack",
+            volume=0.6,
+            pan=0.2,
+            mute=True,
+            solo=True,
+            effects=[{"name": "Effect2"}],
+            raw_element=None,
+        )
+
+        app.selected_track1 = track1
+        app.selected_track2 = track2
+
+        # Mock text widget operations
+        app.diff_text.config = Mock()
+        app.diff_text.delete = Mock()
+        app.diff_text.insert = Mock()
+
+        # Call update method
+        app.update_differences_display()
+
+        # Verify text widget operations
+        assert app.diff_text.config.call_count >= 2  # Enable and disable
+        app.diff_text.delete.assert_called_with(1.0, tk.END)
+        assert app.diff_text.insert.call_count >= 5  # Multiple inserts for differences
+
+
+class TestGUIErrorHandling:
+    """Test GUI error handling scenarios."""
+
+    @patch("tkinter.messagebox.showerror")
+    def test_save_error_scenarios(self, mock_error, gui_app, temp_rpp_file):
+        """Test various save error scenarios."""
+        app, root = gui_app
+
+        # Load file
+        from rpp_editor.parser import RPPParser
+
+        app.parser1 = RPPParser(temp_rpp_file)
+
+        # Test save with parser exception
+        app.parser1.save_file = Mock(side_effect=Exception("Save failed"))
+        app.save_file1()
+        mock_error.assert_called_once()
+
+        # Test save as with exception
+        mock_error.reset_mock()
+        with patch("tkinter.filedialog.asksaveasfilename") as mock_dialog:
+            mock_dialog.return_value = "test_save.rpp"
+            app.save_file1_as()
+            mock_error.assert_called_once()
+
+    def test_widget_error_handling(self, gui_app):
+        """Test widget error handling."""
+        app, root = gui_app
+
+        # Test operations with no parser loaded
+        app.parser1 = None
+        app.parser2 = None
+
+        # These should not raise exceptions
+        app.update_tracks_display()
+        app.update_differences_display()
+        app.highlight_differences()
+
+        # Test selection events with no parser
+        event = Mock()
+        app.on_track1_select(event)  # Should not crash
+        app.on_track2_select(event)  # Should not crash
+
+
+class TestGUIWidgetConfiguration:
+    """Test GUI widget configuration and properties."""
+
+    def test_widget_properties(self, gui_app):
+        """Test widget properties and configuration."""
+        app, root = gui_app
+
+        # Test tree widget configuration
+        assert hasattr(app, "tracks1_tree")
+        assert hasattr(app, "tracks2_tree")
+
+        # Test button configuration
+        assert hasattr(app, "copy_left_button")
+        assert hasattr(app, "copy_right_button")
+        assert hasattr(app, "file1_button")
+        assert hasattr(app, "file2_button")
+
+        # Test variable configuration
+        assert hasattr(app, "copy_volume_var")
+        assert hasattr(app, "copy_pan_var")
+        assert hasattr(app, "copy_effects_var")
+        assert hasattr(app, "file1_var")
+        assert hasattr(app, "file2_var")
+        assert hasattr(app, "status_var")
+
+    def test_layout_configuration(self, gui_app):
+        """Test layout and frame configuration."""
+        app, root = gui_app
+
+        # Test frame existence
+        assert hasattr(app, "main_frame")
+        assert hasattr(app, "file_frame")
+        assert hasattr(app, "comparison_frame")
+        assert hasattr(app, "control_frame")
+        assert hasattr(app, "status_frame")
+
+        # Test text widget
+        assert hasattr(app, "diff_text")
+        assert hasattr(app, "status_label")

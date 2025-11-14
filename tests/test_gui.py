@@ -639,6 +639,174 @@ class TestGUILogicWithoutDisplay:
         )
 
 
+class TestGUIHighlightingWithRealTracks:
+    """Test highlighting logic with real track comparison scenarios."""
+
+    def test_highlight_differences_with_actual_differences(self, gui_app, temp_rpp_file):
+        """Test highlighting when tracks actually have differences."""
+        app, root = gui_app
+
+        # Load the same file into both parsers
+        from rpp_editor.parser import RPPParser
+
+        app.parser1 = RPPParser(temp_rpp_file)
+        app.parser2 = RPPParser(temp_rpp_file)
+
+        # Modify one track to create differences
+        if app.parser2.tracks:
+            app.parser2.tracks[0].volume = 0.5  # Different from original
+
+        # Mock tree widgets to simulate actual GUI trees
+        app.tracks1_tree = Mock()
+        app.tracks2_tree = Mock()
+
+        # Mock tree items to return track names
+        app.tracks1_tree.get_children.return_value = ["item0"]
+        app.tracks2_tree.get_children.return_value = ["item0"]
+
+        # Mock item method to return track names
+        def mock_item1(item_id, key=None, **kwargs):
+            if key == "text" and item_id == "item0":
+                return app.parser1.tracks[0].name if app.parser1.tracks else ""
+            elif "tags" in kwargs:
+                # This is the call we want to test - setting tags for differences
+                return None
+            return ""
+
+        def mock_item2(item_id, key=None, **kwargs):
+            if key == "text" and item_id == "item0":
+                return app.parser2.tracks[0].name if app.parser2.tracks else ""
+            elif "tags" in kwargs:
+                # This is the call we want to test - setting tags for differences
+                return None
+            return ""
+
+        app.tracks1_tree.item.side_effect = mock_item1
+        app.tracks2_tree.item.side_effect = mock_item2
+
+        # Test highlight differences - this should trigger the highlighting loops
+        app.highlight_differences()
+
+        # Verify that item was called to set tags for differences
+        # This covers lines 370-378 in gui.py
+        app.tracks1_tree.item.assert_any_call("item0", tags=("different",))
+        app.tracks2_tree.item.assert_any_call("item0", tags=("different",))
+
+    @patch("tkinter.messagebox.showerror")
+    @patch("tkinter.filedialog.askopenfilename")
+    def test_file_loading_exception_handling(self, mock_dialog, mock_error, gui_app):
+        """Test exception handling in file loading."""
+        app, root = gui_app
+
+        # Mock file dialog to return a path
+        mock_dialog.return_value = "nonexistent.rpp"
+
+        # Test that file loading exceptions are properly caught
+        with patch("rpp_editor.parser.RPPParser") as mock_parser:
+            mock_parser.side_effect = Exception("Parser error")
+
+            # This should trigger the exception handler (lines 312-313)
+            app.load_file1()
+
+            # Verify error dialog was shown
+            mock_error.assert_called_once()
+            assert "Failed to load file" in mock_error.call_args[0][1]
+
+    @patch("tkinter.messagebox.showerror")
+    @patch("tkinter.filedialog.askopenfilename")
+    def test_file_loading_exception_handling_file2(self, mock_dialog, mock_error, gui_app):
+        """Test exception handling in file2 loading."""
+        app, root = gui_app
+
+        # Mock file dialog to return a path
+        mock_dialog.return_value = "nonexistent.rpp"
+
+        # Test that file loading exceptions are properly caught for file2
+        with patch("rpp_editor.parser.RPPParser") as mock_parser:
+            mock_parser.side_effect = Exception("Parser error")
+
+            # This should trigger the exception handler for file2
+            app.load_file2()
+
+            # Verify error dialog was shown
+            mock_error.assert_called_once()
+            assert "Failed to load file" in mock_error.call_args[0][1]
+
+    def test_save_exception_scenarios_detailed(self, gui_app, temp_rpp_file):
+        """Test detailed save exception scenarios."""
+        app, root = gui_app
+
+        # Load files first
+        from rpp_editor.parser import RPPParser
+
+        app.parser1 = RPPParser(temp_rpp_file)
+        app.parser2 = RPPParser(temp_rpp_file)
+
+        # Test save file1 exception handling
+        with patch.object(app.parser1, "save_file", side_effect=Exception("Save failed")):
+            with patch("tkinter.messagebox.showerror") as mock_error:
+                app.save_file1()
+                mock_error.assert_called_once()
+
+        # Test save file2 exception handling
+        with patch.object(app.parser2, "save_file", side_effect=Exception("Save failed")):
+            with patch("tkinter.messagebox.showerror") as mock_error:
+                app.save_file2()
+                mock_error.assert_called_once()
+
+        # Test save as file1 exception handling
+        with patch.object(app.parser1, "save_file", side_effect=Exception("Save failed")):
+            with patch("tkinter.filedialog.asksaveasfilename", return_value="test.rpp"):
+                with patch("tkinter.messagebox.showerror") as mock_error:
+                    app.save_file1_as()
+                    mock_error.assert_called_once()
+
+        # Test save as file2 exception handling
+        with patch.object(app.parser2, "save_file", side_effect=Exception("Save failed")):
+            with patch("tkinter.filedialog.asksaveasfilename", return_value="test2.rpp"):
+                with patch("tkinter.messagebox.showerror") as mock_error:
+                    app.save_file2_as()
+                    mock_error.assert_called_once()
+
+    def test_save_file2_operations(self, gui_app, temp_rpp_file):
+        """Test file2 save operations to cover missing lines."""
+        app, root = gui_app
+
+        # Load file2
+        from rpp_editor.parser import RPPParser
+
+        app.parser2 = RPPParser(temp_rpp_file)
+
+        # Test successful save file2
+        with patch.object(app.parser2, "save_file") as mock_save:
+            with patch("tkinter.messagebox.showinfo") as mock_info:
+                app.save_file2()
+                mock_save.assert_called_once()
+                mock_info.assert_called_once()
+
+        # Test successful save as file2
+        with patch.object(app.parser2, "save_file") as mock_save:
+            with patch("tkinter.filedialog.asksaveasfilename", return_value="test.rpp"):
+                with patch("tkinter.messagebox.showinfo") as mock_info:
+                    app.save_file2_as()
+                    mock_save.assert_called_once_with("test.rpp")
+                    mock_info.assert_called_once()
+
+    def test_no_parser_save_operations(self, gui_app):
+        """Test save operations when no parser is loaded."""
+        app, root = gui_app
+
+        # Test save operations with no parsers - should do nothing
+        app.parser1 = None
+        app.parser2 = None
+
+        # These should not raise exceptions and should do nothing
+        app.save_file1()
+        app.save_file2()
+        app.save_file1_as()
+        app.save_file2_as()
+
+
 class TestGUIMenuOperations:
     """Test GUI menu operations with mocking."""
 

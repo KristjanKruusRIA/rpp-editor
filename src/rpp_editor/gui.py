@@ -383,7 +383,7 @@ class RPPEditorGUI:
         # Get the default font for the treeview
         try:
             font = tkFont.Font(font=self.tracks1_tree.cget("font"))
-        except:
+        except (tk.TclError, ValueError, TypeError):
             # Fallback to default font
             font = tkFont.Font(family="TkDefaultFont", size=9)
 
@@ -419,7 +419,7 @@ class RPPEditorGUI:
             # Set more generous limits based on column type
             if column_id == "#0":  # Track Name
                 max_width = min(max_width, 500)  # Increased from 400px
-                max_width = max(max_width, 200)  # Increased from 150px - more room for track names
+                max_width = max(max_width, 250)  # Increased minimum - ensure track names show fully
             elif column_id in ["volume", "pan"]:  # Numeric columns
                 max_width = min(max_width, 120)
                 max_width = max(max_width, 100)  # Increased from 80px
@@ -427,7 +427,7 @@ class RPPEditorGUI:
                 max_width = min(
                     max_width, 1200
                 )  # Increased from 600px - more room for long effect lists
-                max_width = max(max_width, 300)  # Increased from 200px
+                max_width = max(max_width, 350)  # Increased minimum for effects
 
             return max_width
 

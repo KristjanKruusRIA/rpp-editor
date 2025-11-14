@@ -42,14 +42,15 @@ jobs:
     
     - name: Test with pytest
       run: |
-        pytest tests/ -v --cov=src/rpp_editor --cov-report=xml --cov-report=term-missing
+        pytest tests/ -v --cov=src/rpp_editor --cov-branch --cov-report=xml --cov-report=term-missing --cov-report=html
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
+        token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
 
   lint:

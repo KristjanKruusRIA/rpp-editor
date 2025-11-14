@@ -454,7 +454,7 @@ class RPPEditorGUI:
 
     def copy_track_to_file1(self):
         """Copy selected track settings from file 2 to file 1."""
-        if not (self.selected_track1 and self.selected_track2):
+        if not (self.selected_track1 and self.selected_track2 and self.parser1):
             return
 
         try:
@@ -477,7 +477,7 @@ class RPPEditorGUI:
 
     def copy_track_to_file2(self):
         """Copy selected track settings from file 1 to file 2."""
-        if not (self.selected_track1 and self.selected_track2):
+        if not (self.selected_track1 and self.selected_track2 and self.parser2):
             return
 
         try:

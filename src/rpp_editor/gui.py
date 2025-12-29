@@ -129,7 +129,7 @@ class RPPEditorGUI:
 
         self.tracks1_tree = ttk.Treeview(
             tracks1_frame,
-            columns=("volume", "pan", "effects"),
+            columns=("volume", "pan", "effects", "envelopes"),
             show="tree headings",
             height=15,
         )
@@ -137,12 +137,14 @@ class RPPEditorGUI:
         self.tracks1_tree.heading("volume", text="Volume")
         self.tracks1_tree.heading("pan", text="Pan")
         self.tracks1_tree.heading("effects", text="Effects")
+        self.tracks1_tree.heading("envelopes", text="Envelopes")
 
         # Initial column configuration (will be auto-resized when data is loaded)
         self.tracks1_tree.column("#0", width=200, stretch=False)  # Increased default width
         self.tracks1_tree.column("volume", width=100, stretch=False)
         self.tracks1_tree.column("pan", width=100, stretch=False)
         self.tracks1_tree.column("effects", width=400, stretch=False)  # Increased default width
+        self.tracks1_tree.column("envelopes", width=200, stretch=False)
 
         tracks1_scrollbar = ttk.Scrollbar(
             tracks1_frame, orient=tk.VERTICAL, command=self.tracks1_tree.yview
@@ -159,7 +161,7 @@ class RPPEditorGUI:
 
         self.tracks2_tree = ttk.Treeview(
             tracks2_frame,
-            columns=("volume", "pan", "effects"),
+            columns=("volume", "pan", "effects", "envelopes"),
             show="tree headings",
             height=15,
         )
@@ -167,12 +169,14 @@ class RPPEditorGUI:
         self.tracks2_tree.heading("volume", text="Volume")
         self.tracks2_tree.heading("pan", text="Pan")
         self.tracks2_tree.heading("effects", text="Effects")
+        self.tracks2_tree.heading("envelopes", text="Envelopes")
 
         # Initial column configuration (will be auto-resized when data is loaded)
         self.tracks2_tree.column("#0", width=200, stretch=False)  # Increased default width
         self.tracks2_tree.column("volume", width=100, stretch=False)
         self.tracks2_tree.column("pan", width=100, stretch=False)
         self.tracks2_tree.column("effects", width=400, stretch=False)  # Increased default width
+        self.tracks2_tree.column("envelopes", width=200, stretch=False)
 
         tracks2_scrollbar = ttk.Scrollbar(
             tracks2_frame, orient=tk.VERTICAL, command=self.tracks2_tree.yview
@@ -228,6 +232,7 @@ class RPPEditorGUI:
         self.copy_volume_var = tk.BooleanVar(value=True)
         self.copy_pan_var = tk.BooleanVar(value=True)
         self.copy_effects_var = tk.BooleanVar(value=True)
+        self.copy_envelopes_var = tk.BooleanVar(value=True)
 
         copy_volume_check = ttk.Checkbutton(
             copy_options_frame, text="Volume", variable=self.copy_volume_var
@@ -235,6 +240,9 @@ class RPPEditorGUI:
         copy_pan_check = ttk.Checkbutton(copy_options_frame, text="Pan", variable=self.copy_pan_var)
         copy_effects_check = ttk.Checkbutton(
             copy_options_frame, text="Effects", variable=self.copy_effects_var
+        )
+        copy_envelopes_check = ttk.Checkbutton(
+            copy_options_frame, text="Envelopes", variable=self.copy_envelopes_var
         )
 
         # Differences frame
@@ -254,6 +262,7 @@ class RPPEditorGUI:
         copy_volume_check.pack(side=tk.LEFT, padx=5)
         copy_pan_check.pack(side=tk.LEFT, padx=5)
         copy_effects_check.pack(side=tk.LEFT, padx=5)
+        copy_envelopes_check.pack(side=tk.LEFT, padx=5)
 
         diff_frame.pack(side=tk.RIGHT, padx=5, pady=5, fill=tk.BOTH, expand=True)
         self.diff_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -344,6 +353,7 @@ class RPPEditorGUI:
         if self.parser1:
             for i, track in enumerate(self.parser1.tracks):
                 effects_str = ", ".join([fx["name"] for fx in track.effects])
+                envelopes_str = self._format_envelope_info(track)
                 # Use different formatting for master track
                 display_name = f"🎛️ {track.name}" if track.is_master else track.name
                 self.tracks1_tree.insert(
@@ -351,7 +361,7 @@ class RPPEditorGUI:
                     "end",
                     iid=str(i),
                     text=display_name,
-                    values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str),
+                    values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str, envelopes_str),
                     tags=("master",) if track.is_master else (),
                 )
 
@@ -359,6 +369,7 @@ class RPPEditorGUI:
         if self.parser2:
             for i, track in enumerate(self.parser2.tracks):
                 effects_str = ", ".join([fx["name"] for fx in track.effects])
+                envelopes_str = self._format_envelope_info(track)
                 # Use different formatting for master track
                 display_name = f"🎛️ {track.name}" if track.is_master else track.name
                 self.tracks2_tree.insert(
@@ -366,7 +377,7 @@ class RPPEditorGUI:
                     "end",
                     iid=str(i),
                     text=display_name,
-                    values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str),
+                    values=(f"{track.volume:.3f}", f"{track.pan:.3f}", effects_str, envelopes_str),
                     tags=("master",) if track.is_master else (),
                 )
 
@@ -375,6 +386,23 @@ class RPPEditorGUI:
 
         # Auto-resize columns to fit content
         self.auto_resize_columns()
+
+    def _format_envelope_info(self, track):
+        """Format envelope information for display."""
+        env_parts = []
+        
+        if track.volume_envelope and track.volume_envelope.active:
+            env_parts.append(f"Vol({len(track.volume_envelope.points)}pts)")
+        
+        if track.pan_envelope and track.pan_envelope.active:
+            env_parts.append(f"Pan({len(track.pan_envelope.points)}pts)")
+        
+        if track.parameter_envelopes:
+            active_param_envs = [e for e in track.parameter_envelopes if e.active]
+            if active_param_envs:
+                env_parts.append(f"{len(active_param_envs)} Param Envs")
+        
+        return ", ".join(env_parts) if env_parts else "None"
 
     def auto_resize_columns(self):
         """Automatically resize columns to fit their content."""
@@ -405,7 +433,7 @@ class RPPEditorGUI:
                     text = tree.item(item, "text")
                 else:
                     values = tree.item(item, "values")
-                    col_index = {"volume": 0, "pan": 1, "effects": 2}.get(column_id)
+                    col_index = {"volume": 0, "pan": 1, "effects": 2, "envelopes": 3}.get(column_id)
                     if col_index is not None and col_index < len(values):
                         text = values[col_index]
                     else:
@@ -423,17 +451,20 @@ class RPPEditorGUI:
             elif column_id in ["volume", "pan"]:  # Numeric columns
                 max_width = min(max_width, 120)
                 max_width = max(max_width, 100)  # Increased from 80px
-            else:  # Effects column
+            elif column_id == "effects":  # Effects column
                 max_width = min(
                     max_width, 1200
                 )  # Increased from 600px - more room for long effect lists
                 max_width = max(max_width, 350)  # Increased minimum for effects
+            elif column_id == "envelopes":  # Envelopes column
+                max_width = min(max_width, 400)  # Reasonable maximum for envelope info
+                max_width = max(max_width, 150)  # Minimum for envelope column
 
             return max_width
 
         # Auto-resize columns for both trees
         for tree in [self.tracks1_tree, self.tracks2_tree]:
-            for col_id in ["#0", "volume", "pan", "effects"]:
+            for col_id in ["#0", "volume", "pan", "effects", "envelopes"]:
                 width = calculate_column_width(tree, col_id)
                 tree.column(col_id, width=width, stretch=False)
 
@@ -531,6 +562,7 @@ class RPPEditorGUI:
                 copy_volume=self.copy_volume_var.get(),
                 copy_pan=self.copy_pan_var.get(),
                 copy_effects=self.copy_effects_var.get(),
+                copy_envelopes=self.copy_envelopes_var.get(),
             )
 
             self.update_tracks_display()
@@ -554,6 +586,7 @@ class RPPEditorGUI:
                 copy_volume=self.copy_volume_var.get(),
                 copy_pan=self.copy_pan_var.get(),
                 copy_effects=self.copy_effects_var.get(),
+                copy_envelopes=self.copy_envelopes_var.get(),
             )
 
             self.update_tracks_display()

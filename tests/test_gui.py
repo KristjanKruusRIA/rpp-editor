@@ -988,8 +988,9 @@ class TestGUIUpdateMethods:
         app.tracks2_tree.delete = Mock()
         app.tracks2_tree.insert = Mock()
 
-        # Mock highlight differences
+        # Mock methods that access tree items
         app.highlight_differences = Mock()
+        app.auto_resize_columns = Mock()
 
         # Call update method
         app.update_tracks_display()
@@ -1188,10 +1189,12 @@ class TestGUIWidgetConfiguration:
             app.tracks1_tree.column("effects", "width"),
         ]
 
-        # Verify columns expanded to accommodate content
-        assert new_widths[0] >= initial_widths[0]  # Track name column should be wider
-        assert new_widths[1] >= initial_widths[1]  # Effects column should be wider
+        # Verify columns are sized appropriately for content
+        # Track name column should accommodate the long track name
+        assert new_widths[0] >= 250  # Minimum track name width
+        # Effects column should accommodate the long effect name
+        assert new_widths[1] >= 350  # Minimum effects width
 
         # Verify reasonable limits are applied
-        assert new_widths[0] <= 400  # Track name shouldn't exceed 400px
-        assert new_widths[1] <= 600  # Effects shouldn't exceed 600px
+        assert new_widths[0] <= 500  # Track name shouldn't exceed 500px
+        assert new_widths[1] <= 1200  # Effects shouldn't exceed 1200px

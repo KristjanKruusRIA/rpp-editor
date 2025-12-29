@@ -64,7 +64,7 @@ python -m rpp_editor.gui
 4. **Select Tracks**: Click on tracks in either list to select them (including master tracks)
 5. **View Differences**: The bottom panel shows detailed differences between selected tracks
 6. **Copy Settings**: Use the copy buttons to transfer settings between tracks
-   - Choose which settings to copy using checkboxes (Volume, Pan, Effects)
+   - Choose which settings to copy using checkboxes (Volume, Pan, Effects, Envelopes)
    - Works between: Master ↔ Master, Master ↔ Track, Track ↔ Track
 7. **Save Changes**: Use File menu to save modified files
 
@@ -79,7 +79,7 @@ python -m rpp_editor.gui
 - **Right side**: Tracks from File 2
 - **🎛️ Master tracks**: Blue highlighting with special icon
 - **Red highlighting**: Indicates tracks with differences
-- **Columns**: Track name, volume, pan, and effects list
+- **Columns**: Track name, volume, pan, effects list, and envelopes
 
 #### Copy Controls Panel
 - **Copy buttons**: Transfer settings between selected tracks
@@ -146,6 +146,7 @@ flake8 src/ tests/
 ### Supported Features
 
 - **Track settings**: Volume (VOLPAN), pan, mute, solo
+- **Envelopes**: Volume envelopes (VOLENV2), pan envelopes (PANENV2), and VST parameter envelopes (PARMENV)
 - **Master track**: Volume, pan, and complete effects chain (MASTERFXLIST)
 - **Effects**: VST plugins, JS scripts, and other effects with complete metadata
 - **Project info**: REAPER version, tempo, track count
@@ -207,9 +208,4 @@ This project uses the RPP library by Perlence, which is licensed under BSD-3-Cla
 
 ## Changelog
 
-### v1.0.0
-- ✅ Complete master track support
-- ✅ Structure-preserving effect copying
-- ✅ Professional GUI with visual track differences
-- ✅ Comprehensive test suite
-- ✅ CI/CD pipeline with GitHub Actions
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.

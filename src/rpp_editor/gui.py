@@ -27,7 +27,18 @@ class RPPEditorGUI:
         self.selected_track2: Optional[TrackInfo] = None
 
         # Remember last directory used for file operations
-        self.last_directory = os.getcwd()
+        # Use user's Documents folder or home directory as default instead of cwd
+        try:
+            import pathlib
+
+            documents_path = pathlib.Path.home() / "Documents"
+            if documents_path.exists():
+                self.last_directory = str(documents_path)
+            else:
+                self.last_directory = str(pathlib.Path.home())
+        except Exception:
+            # Fallback to current directory if above fails
+            self.last_directory = os.getcwd()
 
         self.create_widgets()
         self.setup_layout()

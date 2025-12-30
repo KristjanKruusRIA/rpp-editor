@@ -26,6 +26,9 @@ class RPPEditorGUI:
         self.selected_track1: Optional[TrackInfo] = None
         self.selected_track2: Optional[TrackInfo] = None
 
+        # Remember last directory used for file operations
+        self.last_directory = os.getcwd()
+
         self.create_widgets()
         self.setup_layout()
 
@@ -284,13 +287,16 @@ class RPPEditorGUI:
         file_path = filedialog.askopenfilename(
             title="Load RPP File 1",
             filetypes=[("RPP files", "*.rpp"), ("All files", "*.*")],
-            initialdir=os.path.dirname(os.path.abspath(__file__)),
+            initialdir=self.last_directory,
         )
 
         if file_path:
             try:
                 self.parser1 = RPPParser(file_path)
                 self.file1_var.set(os.path.basename(file_path))
+
+                # Remember this directory for next time
+                self.last_directory = os.path.dirname(file_path)
 
                 # Update info
                 info = self.parser1.get_project_info()
@@ -314,13 +320,16 @@ class RPPEditorGUI:
         file_path = filedialog.askopenfilename(
             title="Load RPP File 2",
             filetypes=[("RPP files", "*.rpp"), ("All files", "*.*")],
-            initialdir=os.path.dirname(os.path.abspath(__file__)),
+            initialdir=self.last_directory,
         )
 
         if file_path:
             try:
                 self.parser2 = RPPParser(file_path)
                 self.file2_var.set(os.path.basename(file_path))
+
+                # Remember this directory for next time
+                self.last_directory = os.path.dirname(file_path)
 
                 # Update info
                 info = self.parser2.get_project_info()
@@ -615,11 +624,14 @@ class RPPEditorGUI:
                 title="Save RPP File 1 As",
                 filetypes=[("RPP files", "*.rpp"), ("All files", "*.*")],
                 defaultextension=".rpp",
+                initialdir=self.last_directory,
             )
 
             if file_path:
                 try:
                     self.parser1.save_file(file_path)
+                    # Remember this directory for next time
+                    self.last_directory = os.path.dirname(file_path)
                     self.status_var.set(f"File 1 saved as {os.path.basename(file_path)}")
                     messagebox.showinfo("Success", f"File saved as {os.path.basename(file_path)}")
                 except Exception as e:
@@ -642,11 +654,14 @@ class RPPEditorGUI:
                 title="Save RPP File 2 As",
                 filetypes=[("RPP files", "*.rpp"), ("All files", "*.*")],
                 defaultextension=".rpp",
+                initialdir=self.last_directory,
             )
 
             if file_path:
                 try:
                     self.parser2.save_file(file_path)
+                    # Remember this directory for next time
+                    self.last_directory = os.path.dirname(file_path)
                     self.status_var.set(f"File 2 saved as {os.path.basename(file_path)}")
                     messagebox.showinfo("Success", f"File saved as {os.path.basename(file_path)}")
                 except Exception as e:

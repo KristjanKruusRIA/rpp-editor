@@ -652,16 +652,28 @@ class RPPParser:
             target_fxchain = target_track.raw_element.find("./FXCHAIN")
             source_fxchain = source_track.raw_element.find("./FXCHAIN")
 
-            if target_fxchain and source_fxchain:
+            if source_fxchain:
                 # Create a deep copy of the source FXCHAIN
                 new_fxchain = copy.deepcopy(source_fxchain)
 
-                # Find the index of the target FXCHAIN in the track
-                track_children = target_track.raw_element.children
-                fxchain_index = track_children.index(target_fxchain)
+                if target_fxchain:
+                    # Replace existing FXCHAIN
+                    track_children = target_track.raw_element.children
+                    fxchain_index = track_children.index(target_fxchain)
+                    track_children[fxchain_index] = new_fxchain
+                else:
+                    # Create new FXCHAIN if target doesn't have one
+                    # Insert FXCHAIN after MAINSEND or at the end
+                    track_children = target_track.raw_element.children
+                    insert_index = len(track_children)
 
-                # Replace the old FXCHAIN with the new one
-                track_children[fxchain_index] = new_fxchain
+                    # Try to find MAINSEND to insert after it
+                    for i, child in enumerate(track_children):
+                        if hasattr(child, "tag") and child.tag == "MAINSEND":
+                            insert_index = i + 1
+                            break
+
+                    track_children.insert(insert_index, new_fxchain)
 
                 # Update track info
                 target_track.effects = source_track.effects.copy()

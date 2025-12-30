@@ -12,7 +12,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="rpp-editor",
-    version="1.1.2",
+    version="3",
     author="RPP Editor Contributors",
     description="A GUI application for editing and comparing REAPER project files",
     long_description=long_description,

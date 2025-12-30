@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.3] - 2025-12-30
+
+### Fixed
+- **VST Effect Copying**: Fixed copying VST effects to tracks without existing FXCHAIN sections
+  - Effects can now be copied to tracks that don't already have any effects
+  - Resolves silent copy failures when target tracks lack FXCHAIN elements
+  - Improved FXCHAIN creation and insertion logic for effect copying
+
 ## [1.1.2] - 2025-12-30
 
 ### Changed

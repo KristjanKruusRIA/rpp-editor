@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-12-30
+
+### Fixed
+- **Track Comparison KeyError**: Fixed GUI crash when comparing tracks with envelope differences
+  - Resolved `KeyError: 'track1'` that occurred during track comparison display
+  - Flattened nested envelope difference structure to match GUI expectations
+  - Added proper handling for envelope presence/absence differences
+
+### Technical Details
+- Modified `compare_envelope()` function to return flattened difference structures
+- Updated envelope comparison logic to handle nested properties correctly
+- All envelope differences now use consistent `{'track1': value, 'track2': value}` format
+- Maintained backward compatibility with existing comparison functionality
+
 ## [1.1.0]
 
 ### Added

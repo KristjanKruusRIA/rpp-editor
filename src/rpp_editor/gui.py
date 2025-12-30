@@ -390,18 +390,18 @@ class RPPEditorGUI:
     def _format_envelope_info(self, track):
         """Format envelope information for display."""
         env_parts = []
-        
+
         if track.volume_envelope and track.volume_envelope.active:
             env_parts.append(f"Vol({len(track.volume_envelope.points)}pts)")
-        
+
         if track.pan_envelope and track.pan_envelope.active:
             env_parts.append(f"Pan({len(track.pan_envelope.points)}pts)")
-        
+
         if track.parameter_envelopes:
             active_param_envs = [e for e in track.parameter_envelopes if e.active]
             if active_param_envs:
                 env_parts.append(f"{len(active_param_envs)} Param Envs")
-        
+
         return ", ".join(env_parts) if env_parts else "None"
 
     def auto_resize_columns(self):

@@ -13,6 +13,7 @@ import rpp
 @dataclass
 class EnvelopePoint:
     """Represents a single point in an envelope."""
+
     time: float
     value: float
     curve_type: int = 0
@@ -23,6 +24,7 @@ class EnvelopePoint:
 @dataclass
 class Envelope:
     """Contains information about an envelope in an RPP file."""
+
     type: str  # "volume", "pan", or "parameter"
     name: str  # Human-readable name
     eguid: str  # Envelope GUID
@@ -62,7 +64,7 @@ class TrackInfo:
             active_param_envs = [e for e in self.parameter_envelopes if e.active]
             if active_param_envs:
                 env_info.append(f"{len(active_param_envs)} Param Envs")
-        
+
         env_str = f" [{', '.join(env_info)}]" if env_info else ""
         return f"{prefix} '{self.name}' (Vol: {self.volume:.2f}, Pan: {self.pan:.2f}){env_str}"
 
@@ -146,7 +148,8 @@ class RPPParser:
             effects = self._parse_master_effects()
 
             # Parse master envelopes (these would be at project level if they exist)
-            # Master doesn't typically have VOLENV2/PANENV2, but could have master parameter envelopes
+            # Master doesn't typically have VOLENV2/PANENV2, but could have master parameter
+            # envelopes
             parameter_envelopes = []
             masterfxlist_element = self.project.find(".//MASTERFXLIST")
             if masterfxlist_element:
@@ -163,7 +166,7 @@ class RPPParser:
                 raw_element=self.project,  # Use the project root as the raw element
                 is_master=True,
                 volume_envelope=None,  # Master typically doesn't have volume envelope
-                pan_envelope=None,     # Master typically doesn't have pan envelope
+                pan_envelope=None,  # Master typically doesn't have pan envelope
                 parameter_envelopes=parameter_envelopes,
             )
 
@@ -185,9 +188,9 @@ class RPPParser:
         # Iterate through children in order to preserve effect sequence
         for child in masterfxlist_element.children:
             # Skip non-element children (lists representing settings/attributes)
-            if not hasattr(child, 'tag'):
+            if not hasattr(child, "tag"):
                 continue
-                
+
             if child.tag == "VST" and len(child.attrib) >= 2:
                 effect_info = {
                     "type": "VST",
@@ -253,7 +256,7 @@ class RPPParser:
             # Parse envelopes
             volume_envelope = self._parse_volume_envelope(track_element)
             pan_envelope = self._parse_pan_envelope(track_element)
-            
+
             # Parse parameter envelopes from FXCHAIN
             parameter_envelopes = []
             fxchain_element = track_element.find("./FXCHAIN")
@@ -290,9 +293,9 @@ class RPPParser:
         # Iterate through children in order to preserve effect sequence
         for child in fxchain_element.children:
             # Skip non-element children (lists representing settings/attributes)
-            if not hasattr(child, 'tag'):
+            if not hasattr(child, "tag"):
                 continue
-                
+
             if child.tag == "VST" and len(child.attrib) >= 2:
                 effect_info = {
                     "type": "VST",
@@ -325,7 +328,7 @@ class RPPParser:
     def _parse_envelope_points(self, envelope_element) -> List[EnvelopePoint]:
         """Parse envelope points from PT entries."""
         points = []
-        
+
         for child in envelope_element.children:
             if isinstance(child, list) and len(child) >= 3 and child[0] == "PT":
                 try:
@@ -334,19 +337,19 @@ class RPPParser:
                     curve_type = int(child[3]) if len(child) > 3 else 0
                     tension = float(child[4]) if len(child) > 4 else 0.0
                     selected = bool(int(child[5])) if len(child) > 5 else False
-                    
+
                     point = EnvelopePoint(
                         time=time,
                         value=value,
                         curve_type=curve_type,
                         tension=tension,
-                        selected=selected
+                        selected=selected,
                     )
                     points.append(point)
                 except (ValueError, IndexError):
                     # Skip malformed points
                     continue
-        
+
         return points
 
     def _get_envelope_property(self, envelope_element, prop_name: str, default=None):
@@ -371,21 +374,21 @@ class RPPParser:
         volenv_element = track_element.find("./VOLENV2")
         if not volenv_element:
             return None
-        
+
         eguid = self._get_envelope_property(volenv_element, "EGUID", "")
         if not isinstance(eguid, str):
             eguid = str(eguid) if eguid is not None else ""
         act_data = self._get_envelope_property(volenv_element, "ACT", [0, -1])
         active = bool(int(act_data[0])) if act_data and len(act_data) > 0 else False
-        
+
         vis_data = self._get_envelope_property(volenv_element, "VIS", [0, 1, 1])
         visible = bool(int(vis_data[0])) if vis_data and len(vis_data) > 0 else False
-        
+
         arm_data = self._get_envelope_property(volenv_element, "ARM", [0])
         armed = bool(int(arm_data[0])) if arm_data and len(arm_data) > 0 else False
-        
+
         points = self._parse_envelope_points(volenv_element)
-        
+
         return Envelope(
             type="volume",
             name="Volume",
@@ -394,7 +397,7 @@ class RPPParser:
             visible=visible,
             armed=armed,
             points=points,
-            raw_element=volenv_element
+            raw_element=volenv_element,
         )
 
     def _parse_pan_envelope(self, track_element) -> Optional[Envelope]:
@@ -402,21 +405,21 @@ class RPPParser:
         panenv_element = track_element.find("./PANENV2")
         if not panenv_element:
             return None
-        
+
         eguid = self._get_envelope_property(panenv_element, "EGUID", "")
         if not isinstance(eguid, str):
             eguid = str(eguid) if eguid is not None else ""
         act_data = self._get_envelope_property(panenv_element, "ACT", [0, -1])
         active = bool(int(act_data[0])) if act_data and len(act_data) > 0 else False
-        
+
         vis_data = self._get_envelope_property(panenv_element, "VIS", [0, 1, 1])
         visible = bool(int(vis_data[0])) if vis_data and len(vis_data) > 0 else False
-        
+
         arm_data = self._get_envelope_property(panenv_element, "ARM", [0])
         armed = bool(int(arm_data[0])) if arm_data and len(arm_data) > 0 else False
-        
+
         points = self._parse_envelope_points(panenv_element)
-        
+
         return Envelope(
             type="pan",
             name="Pan",
@@ -425,19 +428,19 @@ class RPPParser:
             visible=visible,
             armed=armed,
             points=points,
-            raw_element=panenv_element
+            raw_element=panenv_element,
         )
 
     def _parse_parameter_envelopes(self, fxchain_element) -> List[Envelope]:
         """Parse PARMENV elements from an FXCHAIN."""
         envelopes = []
-        
+
         for child in fxchain_element.children:
-            if hasattr(child, 'tag') and child.tag == "PARMENV":
+            if hasattr(child, "tag") and child.tag == "PARMENV":
                 # Parse parameter info from attributes
                 # Format: PARMENV 0:_Threshold 0 2 1 "Threshold / ReaComp"
                 param_info = " ".join(child.attrib) if child.attrib else "Unknown Parameter"
-                
+
                 # Extract parameter name from the info
                 param_name = "Unknown Parameter"
                 if child.attrib and len(child.attrib) > 0:
@@ -445,27 +448,27 @@ class RPPParser:
                     first_part = child.attrib[0]
                     if ":" in first_part:
                         param_name = first_part.split(":", 1)[1].replace("_", " ").strip()
-                    
+
                     # If there's a quoted name at the end, use that
                     for attr in child.attrib:
                         if attr.startswith('"') and attr.endswith('"'):
                             param_name = attr.strip('"')
                             break
-                
+
                 eguid = self._get_envelope_property(child, "EGUID", "")
                 if not isinstance(eguid, str):
                     eguid = str(eguid) if eguid is not None else ""
                 act_data = self._get_envelope_property(child, "ACT", [0, -1])
                 active = bool(int(act_data[0])) if act_data and len(act_data) > 0 else False
-                
+
                 vis_data = self._get_envelope_property(child, "VIS", [0, 1, 1])
                 visible = bool(int(vis_data[0])) if vis_data and len(vis_data) > 0 else False
-                
+
                 arm_data = self._get_envelope_property(child, "ARM", [0])
                 armed = bool(int(arm_data[0])) if arm_data and len(arm_data) > 0 else False
-                
+
                 points = self._parse_envelope_points(child)
-                
+
                 envelope = Envelope(
                     type="parameter",
                     name=param_name,
@@ -475,10 +478,10 @@ class RPPParser:
                     armed=armed,
                     points=points,
                     parameter_info=param_info,
-                    raw_element=child
+                    raw_element=child,
                 )
                 envelopes.append(envelope)
-        
+
         return envelopes
 
     def get_track_by_name(self, name: str) -> Optional[TrackInfo]:
@@ -669,14 +672,14 @@ class RPPParser:
     def _copy_envelopes(self, source_track: TrackInfo, target_track: TrackInfo):
         """Copy envelope data from source track to target track."""
         import copy
-        
+
         # Find and remove all existing envelope elements from target track
         envelope_types = ["VOLENV2", "PANENV2", "PARMENV"]
         for envelope_type in envelope_types:
             existing_envelopes = target_track.raw_element.findall(f"./{envelope_type}")
             for envelope in existing_envelopes:
                 target_track.raw_element.children.remove(envelope)
-        
+
         # Copy envelopes from source to target
         for envelope_type in envelope_types:
             source_envelopes = source_track.raw_element.findall(f"./{envelope_type}")
@@ -685,7 +688,7 @@ class RPPParser:
                 new_envelope = copy.deepcopy(source_envelope)
                 # Add it to the target track
                 target_track.raw_element.children.append(new_envelope)
-        
+
         # Update the track info with copied envelope data
         target_track.volume_envelope = source_track.volume_envelope
         target_track.pan_envelope = source_track.pan_envelope
@@ -776,39 +779,57 @@ def compare_tracks(track1: TrackInfo, track2: TrackInfo) -> Dict[str, Dict[str, 
         if env1 is None or env2 is None:
             return {
                 "track1": "Present" if env1 else "None",
-                "track2": "Present" if env2 else "None"
+                "track2": "Present" if env2 else "None",
             }
-        
-        # Compare envelope properties
-        env_diff = {}
+
+        # Compare envelope properties - return individual differences for flattening
+        env_diffs = {}
         if env1.active != env2.active:
-            env_diff["active"] = {"track1": env1.active, "track2": env2.active}
+            env_diffs["active"] = {"track1": env1.active, "track2": env2.active}
         if len(env1.points) != len(env2.points):
-            env_diff["point_count"] = {"track1": len(env1.points), "track2": len(env2.points)}
-        
+            env_diffs["point_count"] = {"track1": len(env1.points), "track2": len(env2.points)}
+
         # Compare first and last point values if both have points
         if env1.points and env2.points:
             if abs(env1.points[0].value - env2.points[0].value) > 0.001:
-                env_diff["start_value"] = {"track1": env1.points[0].value, "track2": env2.points[0].value}
+                env_diffs["start_value"] = {
+                    "track1": env1.points[0].value,
+                    "track2": env2.points[0].value,
+                }
             if abs(env1.points[-1].value - env2.points[-1].value) > 0.001:
-                env_diff["end_value"] = {"track1": env1.points[-1].value, "track2": env2.points[-1].value}
-        
-        return env_diff if env_diff else None
-    
+                env_diffs["end_value"] = {
+                    "track1": env1.points[-1].value,
+                    "track2": env2.points[-1].value,
+                }
+
+        return env_diffs if env_diffs else None
+
     # Compare volume envelopes
     vol_env_diff = compare_envelope(track1.volume_envelope, track2.volume_envelope, "volume")
     if vol_env_diff:
-        differences["volume_envelope"] = vol_env_diff
-    
+        # Flatten nested envelope differences for GUI display
+        if isinstance(vol_env_diff, dict) and "track1" in vol_env_diff and "track2" in vol_env_diff:
+            differences["volume_envelope"] = vol_env_diff
+        else:
+            # Handle nested envelope properties
+            for prop_name, prop_diff in vol_env_diff.items():
+                differences[f"volume_envelope_{prop_name}"] = prop_diff
+
     # Compare pan envelopes
     pan_env_diff = compare_envelope(track1.pan_envelope, track2.pan_envelope, "pan")
     if pan_env_diff:
-        differences["pan_envelope"] = pan_env_diff
-    
+        # Flatten nested envelope differences for GUI display
+        if isinstance(pan_env_diff, dict) and "track1" in pan_env_diff and "track2" in pan_env_diff:
+            differences["pan_envelope"] = pan_env_diff
+        else:
+            # Handle nested envelope properties
+            for prop_name, prop_diff in pan_env_diff.items():
+                differences[f"pan_envelope_{prop_name}"] = prop_diff
+
     # Compare parameter envelopes
     track1_param_env_names = [env.name for env in track1.parameter_envelopes if env.active]
     track2_param_env_names = [env.name for env in track2.parameter_envelopes if env.active]
-    
+
     if track1_param_env_names != track2_param_env_names:
         differences["parameter_envelopes"] = {
             "track1": track1_param_env_names,

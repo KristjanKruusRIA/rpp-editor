@@ -1174,12 +1174,6 @@ class TestGUIWidgetConfiguration:
             ),
         )
 
-        # Get initial widths
-        initial_widths = [
-            app.tracks1_tree.column("#0", "width"),
-            app.tracks1_tree.column("effects", "width"),
-        ]
-
         # Call auto-resize
         app.auto_resize_columns()
 
